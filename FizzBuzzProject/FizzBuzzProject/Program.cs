@@ -1,32 +1,31 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Xml;
 using System.Xml.Linq;
 
 namespace FizzBuzzProject
 {
     class Program
     {
-        enum PolicyType
-        {
-            A = 3,
-            B = 5,
-            C = 7,
-            Unknown
-        }
-
         enum BooleanAliases
         {
             N = 0,
             Y = 1
         }
 
-        class Transaction
+        public interface ITransaction
+        {
+            string PolicyNumber { get; set; }
+            DateTime PolicyStartDate { get; set; }
+            decimal Premiums { get; set; }
+            bool Membership { get; set; }
+            decimal DiscretionaryBonus { get; set; }
+            decimal UpliftPercentage { get; set; }
+            decimal CalculatePolicyPercentage();
+        }
+
+        public class Transaction : ITransaction
         {
             public string PolicyNumber { get; set; }
             public DateTime PolicyStartDate { get; set; }
@@ -35,7 +34,75 @@ namespace FizzBuzzProject
             public decimal DiscretionaryBonus { get; set; }
             public decimal UpliftPercentage { get; set; }
 
-            public static Transaction FromLine(string line)
+            public decimal CalculatePolicyPercentage()
+            {
+
+                return ComputePercentage();
+            }
+
+            protected virtual decimal ComputePercentage()
+            {
+                decimal result = 0.0m;
+                var minDate = new DateTime(1900, 1, 1);
+
+                if (PolicyStartDate <= minDate)
+                    result = 3.0m;
+
+                if (PolicyStartDate >= minDate && Membership) 
+                    result = 7.00m;
+
+                if (PolicyStartDate <= minDate && Membership)
+                    result = 5.00m;
+
+                return result;
+            }
+        }
+
+        public interface ITransactionManager
+        {
+            void CSVToXmlConvertor(string outputFileName);
+        }
+
+        public class TransactionManager : ITransactionManager
+        {
+            private readonly string _path;
+            private readonly bool _hasHeaders;
+
+            public TransactionManager(string path, bool hasHeaders)
+            {
+                _path = path;
+                _hasHeaders = hasHeaders;
+            }
+
+            public void CSVToXmlConvertor(string outputFileName)
+            {
+                var transactions = ReadTransactions();
+
+                XDocument xdoc = new XDocument(
+                    new XDeclaration("1.0", "utf-8", "yes"),
+                    new XElement("Policies",
+                    from transaction in transactions
+                    select
+                      new XElement("Policy", new XAttribute("StartDate", transaction.PolicyStartDate),
+                      new XElement("PolicyNumber", transaction.PolicyNumber),
+                      new XElement("MaturityAmount", CalculateMaturity(transaction)))));
+
+                xdoc.Save(outputFileName);
+            }
+
+            private IList<ITransaction> ReadTransactions()
+            {
+                var list = new List<ITransaction>();
+                //check if file exists - TODO: PB
+                foreach (var line in File.ReadLines(_path).Skip(_hasHeaders ? 1 : 0))
+                {
+                    list.Add(GenerateTransaction(line));
+                }
+
+                return list;
+            }
+
+            private ITransaction GenerateTransaction(string line)
             {
                 var data = line.Split(',');
                 return new Transaction
@@ -49,67 +116,26 @@ namespace FizzBuzzProject
                 };
             }
 
-            public static bool FromString(string str)
+            private bool FromString(string str)
             {
                 return Convert.ToBoolean(Enum.Parse(typeof(BooleanAliases), str));
             }
-
-            public static DateTime GetTransactionDate(string input)
+            
+            private decimal CalculateMaturity(ITransaction transaction)
             {
-                return DateTime.ParseExact(input, "yyyy-MM-dd", CultureInfo.CurrentCulture);
+                int managementFee = Convert.ToInt32(transaction.CalculatePolicyPercentage());
+                return ((transaction.Premiums - (transaction.Premiums * managementFee / 100)) + transaction.DiscretionaryBonus) * transaction.UpliftPercentage / 100;
             }
-        } 
-        
-        static IList<Transaction> ReadTransactions(string path, bool hasHeaders = true)
-        {
-            var list = new List<Transaction>();
-            foreach(var line in File.ReadLines(path).Skip(hasHeaders ? 1 : 0))
-            {
-                list.Add(Transaction.FromLine(line));
-            }
-
-            return list;
-        }
-        
-        static void GenerateXML(IEnumerable<Transaction> transactions)
-        {
-            XDocument xdoc = new XDocument(
-                new XDeclaration("1.0", "utf-8", "yes"),
-                new XElement("Policies", 
-                from transaction in transactions
-                select
-                  new XElement("Policy", new XAttribute("StartDate", transaction.PolicyStartDate),
-                  new XElement("PolicyNumber", transaction.PolicyNumber),
-                  new XElement("MaturityAmount", CalculateMaturity(transaction)))));
-
-            xdoc.Save("C:/FizzBuzzProject/FizzBuzzProject/output.xml");
-        }  
-        
-        static decimal CalculateMaturity(Transaction transaction)
-        {
-            int managementFee = GetPercentageOffer(transaction);
-            return ((transaction.Premiums - (transaction.Premiums * managementFee / 100)) + transaction.DiscretionaryBonus) * transaction.UpliftPercentage / 100;
-        }
-
-        static int GetPercentageOffer(Transaction transaction)
-        {
-            string criteriaCheck = "1900-01-01";
-
-            DateTime checkPolicyDate = Transaction.GetTransactionDate(criteriaCheck);
-
-            if (transaction.PolicyStartDate >= checkPolicyDate && transaction.Membership) return (int)PolicyType.C;
-            if (transaction.PolicyStartDate <= checkPolicyDate && transaction.Membership) return (int)PolicyType.B;
-            if (transaction.PolicyStartDate <= checkPolicyDate) return (int)PolicyType.A;
-
-            return 0;
+            
         }
 
         static void Main(string[] args)
         {
             args = new[] { "../../MaturityData.csv" };
+            string outputPath = @"C:/FizzBuzzProject/FizzBuzzProject/output.xml";
 
-            var transactions = ReadTransactions(args[0]);
-            GenerateXML(transactions);
+            ITransactionManager tm = new TransactionManager(args[0], true);
+            tm.CSVToXmlConvertor(outputFileName: outputPath);
 
             Console.ReadLine();
         }
