@@ -1,0 +1,39 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<Policies>
+  <Policy StartDate="1986-06-01T00:00:00">
+    <PolicyNumber>A100001</PolicyNumber>
+    <MaturityAmount>4120</MaturityAmount>
+  </Policy>
+  <Policy StartDate="1990-01-01T00:00:00">
+    <PolicyNumber>A100002</PolicyNumber>
+    <MaturityAmount>5193.75</MaturityAmount>
+  </Policy>
+  <Policy StartDate="1989-12-31T00:00:00">
+    <PolicyNumber>A100003</PolicyNumber>
+    <MaturityAmount>7077</MaturityAmount>
+  </Policy>
+  <Policy StartDate="1995-01-01T00:00:00">
+    <PolicyNumber>B100001</PolicyNumber>
+    <MaturityAmount>5395.6</MaturityAmount>
+  </Policy>
+  <Policy StartDate="1970-01-01T00:00:00">
+    <PolicyNumber>B100002</PolicyNumber>
+    <MaturityAmount>9030</MaturityAmount>
+  </Policy>
+  <Policy StartDate="1969-07-20T00:00:00">
+    <PolicyNumber>B100003</PolicyNumber>
+    <MaturityAmount>10170</MaturityAmount>
+  </Policy>
+  <Policy StartDate="1992-01-01T00:00:00">
+    <PolicyNumber>C100001</PolicyNumber>
+    <MaturityAmount>5880</MaturityAmount>
+  </Policy>
+  <Policy StartDate="1989-12-31T00:00:00">
+    <PolicyNumber>C100002</PolicyNumber>
+    <MaturityAmount>7018</MaturityAmount>
+  </Policy>
+  <Policy StartDate="1990-01-01T00:00:00">
+    <PolicyNumber>C100003</PolicyNumber>
+    <MaturityAmount>8652.6</MaturityAmount>
+  </Policy>
+</Policies>
